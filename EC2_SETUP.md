@@ -11,12 +11,54 @@ This guide helps you set up your EC2 instance to automatically pull and deploy f
 
 ## 📋 Step 1: Install Docker on EC2
 
+### For Ubuntu/Debian systems:
+
 ```bash
 # Update system
 sudo apt update
 
 # Install Docker
 sudo apt install -y docker.io
+
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to docker group
+sudo usermod -aG docker $USER
+
+# Log out and back in, or run:
+newgrp docker
+```
+
+### For Amazon Linux systems:
+
+```bash
+# Update system
+sudo yum update -y
+
+# Install Docker
+sudo yum install -y docker
+
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to docker group
+sudo usermod -aG docker $USER
+
+# Log out and back in, or run:
+newgrp docker
+```
+
+### For Amazon Linux 2/2023 (using dnf):
+
+```bash
+# Update system
+sudo dnf update -y
+
+# Install Docker
+sudo dnf install -y docker
 
 # Start Docker service
 sudo systemctl start docker
