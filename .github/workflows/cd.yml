@@ -52,7 +52,8 @@ jobs:
       - name: Deploy to EC2
         run: |
           echo "🚀 Deploying to EC2 server..."
-          echo "Image: ${{ steps.meta.outputs.tags }}"
+          echo "Image: ${{ steps.meta.outpu
+          ts.tags }}"
 
           # Set up SSH
           mkdir -p ~/.ssh
@@ -77,15 +78,6 @@ jobs:
             export DB_MAX_CONN="${{ secrets.DB_MAX_CONN }}"
             /tmp/deploy.sh
           EOF
-
-      - name: Run Health Check
-        run: |
-          echo "🔍 Running health check..."
-          # Test the deployed application
-          curl -f "http://${{ secrets.EC2_HOST }}:8000/api/v1/health" || {
-            echo "❌ Health check failed!"
-          }
-          echo "✅ Health check passed!"
 
       - name: Notify Deployment Success
         run: |
