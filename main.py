@@ -54,8 +54,8 @@ def read_root():
             "cumulative_price": "/api/v1/cumulative-price",
             "daily_volatility": "/api/v1/daily-volatility",
             "correlation": "/api/v1/correlation",
-            "tracking_error": "/api/v1/tracking-error"
-        }
+            "tracking_error": "/api/v1/tracking-error",
+        },
     }
 
 
