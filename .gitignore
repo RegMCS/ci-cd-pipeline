@@ -159,3 +159,9 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12

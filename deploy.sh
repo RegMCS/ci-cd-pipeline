@@ -27,9 +27,22 @@ docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
 # Run the new container
 echo "🏃 Starting new container..."
+echo "📋 Environment variables:"
+echo "  DB_HOST: $DB_HOST"
+echo "  DB_PORT: $DB_PORT"
+echo "  DB_NAME: $DB_NAME"
+echo "  DB_USER: $DB_USER"
+echo "  DB_PASSWORD: [HIDDEN]"
+echo "  DB_MIN_CONN: $DB_MIN_CONN"
+echo "  DB_MAX_CONN: $DB_MAX_CONN"
+echo "  IMAGE_NAME: $IMAGE_NAME"
+echo "  CONTAINER_NAME: $CONTAINER_NAME"
+echo "  PORT: $PORT"
+
 docker run -d \
   --name "$CONTAINER_NAME" \
   --restart unless-stopped \
+  --network host \
   -p "$PORT:8000" \
   -e DB_HOST="$DB_HOST" \
   -e DB_PORT="$DB_PORT" \
