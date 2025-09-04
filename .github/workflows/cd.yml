@@ -1,30 +1,22 @@
 name: CD Pipeline
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment to deploy to"
-        required: true
-        default: "staging"
-        type: choice
-        options:
-          - staging
-          - production
+      version:
+        description: "Version tag (optional, leave empty for latest)"
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging
+  deploy:
+    name: Deploy to Server
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    environment: staging
 
     steps:
       - name: Checkout code
@@ -46,10 +38,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.event.inputs.version || 'latest' }}
+            type=sha,prefix=build-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -61,104 +51,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to Staging
+      - name: Deploy to Server
         run: |
-          echo "🚀 Deploying to staging environment..."
+          echo "🚀 Deploying to server..."
           echo "Image: ${{ steps.meta.outputs.tags }}"
-          # Add your staging deployment commands here
-          # Example: kubectl, docker-compose, or cloud provider CLI
+          # Add your deployment commands here
+          # Example: 
+          # - SSH to EC2 and pull new image
+          # - docker-compose down && docker-compose up -d
+          # - kubectl apply -f k8s/
 
       - name: Run Health Check
         run: |
-          echo "🔍 Running health check on staging..."
+          echo "🔍 Running health check..."
           # Add health check commands here
-          # Example: curl -f https://staging-api.example.com/health
+          # Example: curl -f https://your-domain.com/health
 
       - name: Notify Deployment Success
         run: |
-          echo "✅ Successfully deployed to staging!"
+          echo "✅ Successfully deployed!"
           # Add notification logic here (Slack, email, etc.)
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-    environment: production
-    needs: deploy-staging
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Deploy to Production
-        run: |
-          echo "🚀 Deploying to production environment..."
-          echo "Image: ${{ steps.meta.outputs.tags }}"
-          # Add your production deployment commands here
-
-      - name: Run Production Health Check
-        run: |
-          echo "🔍 Running health check on production..."
-          # Add production health check commands here
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Notify Production Deployment
-        run: |
-          echo "✅ Successfully deployed to production!"
-          # Add production notification logic here
-
-  rollback:
-    name: Rollback Deployment
-    runs-on: ubuntu-latest
-    if: failure()
-    environment: ${{ github.event.inputs.environment || 'staging' }}
-
-    steps:
-      - name: Rollback Deployment
-        run: |
-          echo "🔄 Rolling back deployment..."
-          # Add rollback commands here
-
-      - name: Notify Rollback
-        run: |
-          echo "⚠️ Deployment rolled back due to failure"
-          # Add rollback notification logic here

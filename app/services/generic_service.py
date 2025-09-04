@@ -37,6 +37,7 @@ class GenericService:
                 status="healthy",
                 database="connected",
                 timestamp=datetime.utcnow().isoformat(),
+                error=None,
             )
 
         except Exception as e:

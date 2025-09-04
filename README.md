@@ -207,8 +207,59 @@ curl "http://localhost:8000/api/v1/status"
 
 - **Push to main/develop**: Runs CI pipeline
 - **Pull Request**: Runs CI pipeline
-- **Tag creation**: Runs CD pipeline for production
-- **Manual dispatch**: Allows manual deployment
+- **Manual dispatch**: Allows manual deployment (CD pipeline)
+
+## 🚀 Manual Deployment
+
+### **How to Deploy**
+
+1. **Go to GitHub Actions**
+
+   - Navigate to your repository on GitHub
+   - Click on "Actions" tab
+   - Find "CD Pipeline" workflow
+
+2. **Click "Run workflow"**
+
+   - Optionally enter a version tag (e.g., `v1.0.0`)
+   - Click "Run workflow"
+
+3. **Monitor deployment**
+   - Watch the workflow run in real-time
+   - Check logs for any issues
+   - Verify deployment success
+
+### **Deployment Process**
+
+1. **Builds Docker image** with your code
+2. **Pushes to GitHub Container Registry** (GHCR)
+3. **Deploys to your server** (EC2, VPS, etc.)
+4. **Runs health check** to verify deployment
+
+### **Server Setup**
+
+You'll need to configure your server to:
+
+- Pull the latest Docker image
+- Stop old containers
+- Start new containers
+- Run health checks
+
+Example server commands:
+
+```bash
+# Pull latest image
+docker pull ghcr.io/your-username/ci-cd-pipeline:latest
+
+# Stop old containers
+docker-compose down
+
+# Start new containers
+docker-compose up -d
+
+# Check health
+curl -f http://localhost:8000/health
+```
 
 ## 🏗️ Project Structure
 
@@ -235,7 +286,7 @@ fastapi-boilerplate/
 
 - **Input validation** with Pydantic
 - **SQL injection protection** with parameterized queries
-- **Rate limiting** with Nginx
+- **Rate limiting** (configurable)
 - **Security headers** in responses
 - **Automated vulnerability scanning**
 - **Dependency security checks**

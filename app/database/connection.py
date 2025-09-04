@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class DatabasePool:
     """Database connection pool manager"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
         self._pool_config = get_pool_config()
 
@@ -40,10 +40,14 @@ class DatabasePool:
                 detail=f"Database connection pool initialization failed: {str(e)}",
             )
 
-    def get_connection(self):
+    def get_connection(self) -> psycopg2.extensions.connection:
         """Get a connection from the pool"""
         if self._pool is None:
             self.initialize()
+            if self._pool is None:
+                raise HTTPException(
+                    status_code=500, detail="Database connection pool not initialized"
+                )
 
         try:
             conn = self._pool.getconn()
@@ -58,7 +62,7 @@ class DatabasePool:
                 status_code=500, detail=f"Database connection failed: {str(e)}"
             )
 
-    def return_connection(self, conn) -> None:
+    def return_connection(self, conn: psycopg2.extensions.connection) -> None:
         """Return a connection to the pool"""
         if self._pool and conn:
             try:
@@ -72,7 +76,11 @@ class DatabasePool:
             self._pool.closeall()
             logger.info("Database connection pool closed")
 
-    def get_cursor(self, conn, cursor_factory=RealDictCursor):
+    def get_cursor(
+        self,
+        conn: psycopg2.extensions.connection,
+        cursor_factory: type = RealDictCursor,
+    ) -> psycopg2.extras.RealDictCursor:
         """Get a cursor from a connection"""
         return conn.cursor(cursor_factory=cursor_factory)
 
@@ -84,26 +92,28 @@ db_pool = DatabasePool()
 atexit.register(db_pool.close_all)
 
 
-def get_db_connection():
+def get_db_connection() -> psycopg2.extensions.connection:
     """Get a database connection from the pool"""
     return db_pool.get_connection()
 
 
-def return_db_connection(conn):
+def return_db_connection(conn: psycopg2.extensions.connection) -> None:
     """Return a database connection to the pool"""
     return db_pool.return_connection(conn)
 
 
-def get_db_cursor(conn, cursor_factory=RealDictCursor):
+def get_db_cursor(
+    conn: psycopg2.extensions.connection, cursor_factory: type = RealDictCursor
+) -> psycopg2.extras.RealDictCursor:
     """Get a database cursor"""
     return db_pool.get_cursor(conn, cursor_factory)
 
 
-def initialize_db_pool():
+def initialize_db_pool() -> None:
     """Initialize the database pool"""
     return db_pool.initialize()
 
 
-def close_db_pool():
+def close_db_pool() -> None:
     """Close the database pool"""
     return db_pool.close_all()

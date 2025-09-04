@@ -25,7 +25,7 @@ api_router = APIRouter(prefix="/api/v1", tags=["api"])
         503: {"description": "Service is unhealthy"},
     },
 )
-def health_check():
+def health_check() -> HealthResponse:
     """
     Health check endpoint
 
@@ -42,7 +42,7 @@ def health_check():
     description="Get basic API status information",
     responses={200: {"description": "API status retrieved successfully"}},
 )
-def get_status():
+def get_status() -> Dict[str, Any]:
     """
     Get API status information
 
