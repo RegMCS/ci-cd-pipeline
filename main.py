@@ -43,11 +43,19 @@ app.include_router(api_router)
 def read_root():
     """Root endpoint with basic API information"""
     return {
-        "message": "FastAPI Boilerplate",
+        "message": "Portfolio Price API",
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/api/v1/health",
         "status": "/api/v1/status",
+        "endpoints": {
+            "portfolio_price": "/api/v1/portfolio-price",
+            "daily_return": "/api/v1/daily-return",
+            "cumulative_price": "/api/v1/cumulative-price",
+            "daily_volatility": "/api/v1/daily-volatility",
+            "correlation": "/api/v1/correlation",
+            "tracking_error": "/api/v1/tracking-error"
+        }
     }
 
 
