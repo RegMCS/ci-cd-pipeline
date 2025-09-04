@@ -2,12 +2,14 @@
 Portfolio Price API
 Main application entry point with proper separation of concerns
 """
+
+import logging
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 
-from app.database.connection import initialize_db_pool, close_db_pool
+from app.database.connection import close_db_pool, initialize_db_pool
 from app.routes import api_router
 
 # Configure logging
@@ -20,7 +22,7 @@ app = FastAPI(
     description="A FastAPI application for portfolio price management with PostgreSQL database integration",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -35,6 +37,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(api_router)
 
+
 # Root endpoint
 @app.get("/", tags=["root"])
 def read_root():
@@ -44,8 +47,9 @@ def read_root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/api/v1/health",
-        "status": "/api/v1/status"
+        "status": "/api/v1/status",
     }
+
 
 # Application lifecycle events
 @app.on_event("startup")
@@ -59,6 +63,7 @@ async def startup_event():
         logger.error(f"Application startup failed: {e}")
         raise
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on application shutdown"""
@@ -69,11 +74,6 @@ async def shutdown_event():
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
 
+
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

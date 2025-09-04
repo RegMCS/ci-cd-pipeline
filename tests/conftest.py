@@ -69,7 +69,8 @@ def mock_database_pool():
 @pytest.fixture(autouse=True)
 def mock_db_operations():
     """Mock database operations to avoid real DB connections during tests."""
-    with patch("app.database.connection.initialize_db_pool"), patch(
-        "app.database.connection.close_db_pool"
+    with (
+        patch("app.database.connection.initialize_db_pool"),
+        patch("app.database.connection.close_db_pool"),
     ):
         yield

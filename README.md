@@ -42,7 +42,7 @@ A production-ready FastAPI boilerplate with PostgreSQL database integration, con
 3. **Install dependencies**
 
    ```bash
-   pip install -r requirements-dev.txt
+   pip install -r requirements.txt
    ```
 
 4. **Set up environment variables**
