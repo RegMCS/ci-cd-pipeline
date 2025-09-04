@@ -1,0 +1,53 @@
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Run every Sunday at midnight
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-tools
+
+      - name: Update requirements
+        run: |
+          pip-compile --upgrade requirements.in
+          pip-compile --upgrade requirements-dev.in
+
+      - name: Check for updates
+        id: check-updates
+        run: |
+          if git diff --quiet requirements.txt requirements-dev.txt; then
+            echo "updates=false" >> $GITHUB_OUTPUT
+          else
+            echo "updates=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check-updates.outputs.updates == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update dependencies"
+          title: "Automated dependency update"
+          body: |
+            This PR contains automated dependency updates.
+
+            Please review the changes and test thoroughly before merging.
+          branch: dependency-update
+          delete-branch: true
