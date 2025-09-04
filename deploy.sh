@@ -59,13 +59,29 @@ sleep 10
 
 # Health check
 echo "🔍 Running health check..."
-if curl -f "http://localhost:$PORT/api/v1/health" > /dev/null 2>&1; then
-  echo "✅ Health check passed! Deployment successful."
-else
-  echo "❌ Health check failed! Check container logs:"
-  docker logs "$CONTAINER_NAME"
-  exit 1
-fi
+echo "⏳ Waiting for application to fully start..."
+
+# Wait a bit longer for the application to start
+sleep 20
+
+# Try health check with retry logic
+for i in {1..6}; do
+  echo "🔍 Health check attempt $i/6..."
+  if curl -f "http://localhost:$PORT/api/v1/health" > /dev/null 2>&1; then
+    echo "✅ Health check passed! Deployment successful."
+    break
+  else
+    if [ $i -eq 6 ]; then
+      echo "❌ Health check failed after 6 attempts!"
+      echo "📋 Container logs:"
+      docker logs "$CONTAINER_NAME" --tail 20
+      exit 1
+    else
+      echo "⏳ Waiting 10 seconds before retry..."
+      sleep 10
+    fi
+  fi
+done
 
 # Clean up old images
 echo "🧹 Cleaning up old images..."
