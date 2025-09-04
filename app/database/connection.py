@@ -35,15 +35,15 @@ class DatabasePool:
                 "user": self._pool_config["user"],
                 "password": self._pool_config["password"],
             }
-            
+
             pool_params = {
                 "minconn": self._pool_config["minconn"],
                 "maxconn": self._pool_config["maxconn"],
             }
-            
+
             self._pool = ThreadSafeConnectionPool(
                 connection_factory=lambda: psycopg2.connect(**connection_params),
-                **pool_params
+                **pool_params,
             )
             min_conn = self._pool_config["minconn"]
             max_conn = self._pool_config["maxconn"]
