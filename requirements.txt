@@ -1,31 +1,21 @@
-# FastAPI and web server
+# Core FastAPI dependencies
 fastapi==0.115.13
 uvicorn[standard]==0.34.3
-
-# Database
 psycopg2-binary==2.9.10
-
-# Data validation and serialization
 pydantic==2.11.7
-
-# Date utilities
 python-dateutil==2.9.0.post0
 
-# Testing
+# Testing dependencies
 pytest==8.4.1
 pytest-asyncio==1.1.0
 httpx==0.28.1
 
-# Code quality
+# Code quality dependencies
 black==24.10.0
 flake8==7.1.1
 isort==5.13.2
 mypy==1.13.0
 
-# Security
-bandit==1.7.10
-safety==3.2.0
-
-# Documentation
+# Documentation dependencies
 mkdocs==1.6.1
 mkdocs-material==9.5.50

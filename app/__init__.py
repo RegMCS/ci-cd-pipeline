@@ -1,4 +1,4 @@
 """
-Portfolio Price API Application
-A FastAPI application for portfolio price management with PostgreSQL database integration
+FastAPI Boilerplate Application
+A production-ready FastAPI application with PostgreSQL integration
 """
