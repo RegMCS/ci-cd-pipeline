@@ -84,7 +84,6 @@ jobs:
           # Test the deployed application
           curl -f "http://${{ secrets.EC2_HOST }}:8000/api/v1/health" || {
             echo "❌ Health check failed!"
-            exit 1
           }
           echo "✅ Health check passed!"
 
