@@ -52,8 +52,7 @@ jobs:
       - name: Deploy to EC2
         run: |
           echo "🚀 Deploying to EC2 server..."
-          echo "Image: ${{ steps.meta.outpu
-          ts.tags }}"
+          echo "Image: ${{ steps.meta.outputs.tags }}"
 
           # Set up SSH
           mkdir -p ~/.ssh
