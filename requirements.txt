@@ -1,7 +1,8 @@
 # Core FastAPI dependencies
 fastapi==0.115.13
 uvicorn[standard]==0.34.3
-psycopg2==2.9.10
+psycopg2-binary==2.9.10
+psycopg2-pool==1.1
 pydantic==2.11.7
 python-dateutil==2.9.0.post0
 

@@ -10,6 +10,7 @@ from typing import Optional
 import psycopg2
 from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
+from psycopg2_pool import ThreadSafeConnectionPool
 
 from app.config.database import get_pool_config
 
@@ -20,13 +21,13 @@ class DatabasePool:
     """Database connection pool manager"""
 
     def __init__(self) -> None:
-        self._pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
+        self._pool: Optional[ThreadSafeConnectionPool] = None
         self._pool_config = get_pool_config()
 
     def initialize(self) -> None:
         """Initialize the database connection pool"""
         try:
-            self._pool = psycopg2.pool.ThreadedConnectionPool(**self._pool_config)
+            self._pool = ThreadSafeConnectionPool(**self._pool_config)
             min_conn = self._pool_config["minconn"]
             max_conn = self._pool_config["maxconn"]
             logger.info(
