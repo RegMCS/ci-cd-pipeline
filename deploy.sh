@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Deployment script for EC2 instance
-# This script pulls the latest image from GHCR and deploys it
+# This script pulls the latest image from Docker Hub and deploys it
 
 set -e  # Exit on any error
 
 # Configuration
-IMAGE_NAME="ghcr.io/$GITHUB_REPOSITORY"
+IMAGE_NAME="regsim/ci-cd-pipeline"
 CONTAINER_NAME="fastapi-app"
 PORT="8000"
 
 echo "🚀 Starting deployment..."
 
-# Login to GHCR (using GitHub token)
-echo "🔐 Logging into GHCR..."
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+# Login to Docker Hub
+echo "🔐 Logging into Docker Hub..."
+echo "$DOCKERHUB_TOKEN" | docker login docker.io -u "$DOCKERHUB_USERNAME" --password-stdin
 
 # Pull the latest image
 echo "📥 Pulling latest image: $IMAGE_NAME:latest"

@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: regmcs/ci-cd-pipeline
+  IMAGE_NAME: regsim/ci-cd-pipeline
 
 jobs:
   deploy:
@@ -66,9 +66,8 @@ jobs:
           # Run deployment on EC2
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             chmod +x /tmp/deploy.sh
-            export GITHUB_REPOSITORY="${{ github.repository }}"
-            export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
-            export GITHUB_ACTOR="${{ github.actor }}"
+            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+            export DOCKERHUB_TOKEN="${{ secrets.DOCKERHUB_TOKEN }}"
             export DB_HOST="${{ secrets.DB_HOST }}"
             export DB_PORT="${{ secrets.DB_PORT }}"
             export DB_NAME="${{ secrets.DB_NAME }}"
