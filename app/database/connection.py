@@ -27,23 +27,19 @@ class DatabasePool:
     def initialize(self) -> None:
         """Initialize the database connection pool"""
         try:
-            # Separate connection parameters from pool parameters
-            connection_params = {
-                "host": self._pool_config["host"],
-                "port": self._pool_config["port"],
-                "database": self._pool_config["database"],
-                "user": self._pool_config["user"],
-                "password": self._pool_config["password"],
-            }
-
-            pool_params = {
-                "minconn": self._pool_config["minconn"],
-                "maxconn": self._pool_config["maxconn"],
-            }
+            # Create connection string for psycopg2-pool
+            connection_string = (
+                f"host={self._pool_config['host']} "
+                f"port={self._pool_config['port']} "
+                f"dbname={self._pool_config['database']} "
+                f"user={self._pool_config['user']} "
+                f"password={self._pool_config['password']}"
+            )
 
             self._pool = ThreadSafeConnectionPool(
-                connection_factory=lambda: psycopg2.connect(**connection_params),
-                **pool_params,
+                connection_string,
+                minconn=self._pool_config["minconn"],
+                maxconn=self._pool_config["maxconn"],
             )
             min_conn = self._pool_config["minconn"]
             max_conn = self._pool_config["maxconn"]
