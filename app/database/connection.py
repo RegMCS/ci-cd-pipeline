@@ -37,7 +37,7 @@ class DatabasePool:
             )
 
             self._pool = ThreadSafeConnectionPool(
-                connection_string,
+                dsn=connection_string,
                 minconn=self._pool_config["minconn"],
                 maxconn=self._pool_config["maxconn"],
             )
