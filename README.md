@@ -207,9 +207,9 @@ curl "http://localhost:8000/api/v1/status"
 
 - **Push to main/develop**: Runs CI pipeline
 - **Pull Request**: Runs CI pipeline
-- **Manual dispatch**: Allows manual deployment (CD pipeline)
+- **CI success**: Automatically triggers CD pipeline
 
-## 🚀 Manual Deployment
+## 🚀 Automatic Deployment
 
 ### **How to Deploy**
 
@@ -236,30 +236,39 @@ curl "http://localhost:8000/api/v1/status"
 3. **Deploys to your server** (EC2, VPS, etc.)
 4. **Runs health check** to verify deployment
 
-### **Server Setup**
+### **EC2 Server Setup**
 
-You'll need to configure your server to:
+The CD pipeline automatically deploys to your EC2 instance. You need to:
 
-- Pull the latest Docker image
-- Stop old containers
-- Start new containers
-- Run health checks
+1. **Set up GitHub Secrets** (see [EC2_SETUP.md](EC2_SETUP.md))
+2. **Install Docker on EC2**
+3. **Configure SSH access**
+4. **Add database credentials**
 
-Example server commands:
+**Quick Setup:**
 
 ```bash
-# Pull latest image
-docker pull ghcr.io/your-username/ci-cd-pipeline:latest
+# Install Docker on EC2
+sudo apt update && sudo apt install -y docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER
 
-# Stop old containers
-docker-compose down
-
-# Start new containers
-docker-compose up -d
-
-# Check health
-curl -f http://localhost:8000/health
+# Test deployment
+curl http://your-ec2-ip:8000/api/v1/health
 ```
+
+**Full setup guide:** See [EC2_SETUP.md](EC2_SETUP.md) for detailed instructions.
+
+### **Automatic Deployment Process**
+
+1. **Push to main** → CI runs tests
+2. **Tests pass** → CD builds Docker image
+3. **Image pushed to GHCR** → GitHub Container Registry
+4. **SSH to EC2** → Deploy script runs
+5. **Pull latest image** → From GHCR
+6. **Stop old container** → Clean shutdown
+7. **Start new container** → With latest code
+8. **Health check** → Verify deployment
 
 ## 🏗️ Project Structure
 

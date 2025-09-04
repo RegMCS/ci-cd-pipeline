@@ -1,13 +1,10 @@
 name: CD Pipeline
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag (optional, leave empty for latest)"
-        required: false
-        type: string
-        default: ""
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -17,6 +14,7 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Checkout code
@@ -51,21 +49,45 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to Server
+      - name: Deploy to EC2
         run: |
-          echo "🚀 Deploying to server..."
+          echo "🚀 Deploying to EC2 server..."
           echo "Image: ${{ steps.meta.outputs.tags }}"
-          # Add your deployment commands here
-          # Example: 
-          # - SSH to EC2 and pull new image
-          # - docker-compose down && docker-compose up -d
-          # - kubectl apply -f k8s/
+
+          # Set up SSH
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+          # Copy deployment script to EC2
+          scp deploy.sh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/deploy.sh
+
+          # Run deployment on EC2
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            chmod +x /tmp/deploy.sh
+            export GITHUB_REPOSITORY="${{ github.repository }}"
+            export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+            export GITHUB_ACTOR="${{ github.actor }}"
+            export DB_HOST="${{ secrets.DB_HOST }}"
+            export DB_PORT="${{ secrets.DB_PORT }}"
+            export DB_NAME="${{ secrets.DB_NAME }}"
+            export DB_USER="${{ secrets.DB_USER }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export DB_MIN_CONN="${{ secrets.DB_MIN_CONN }}"
+            export DB_MAX_CONN="${{ secrets.DB_MAX_CONN }}"
+            /tmp/deploy.sh
+          EOF
 
       - name: Run Health Check
         run: |
           echo "🔍 Running health check..."
-          # Add health check commands here
-          # Example: curl -f https://your-domain.com/health
+          # Test the deployed application
+          curl -f "http://${{ secrets.EC2_HOST }}:8000/api/v1/health" || {
+            echo "❌ Health check failed!"
+            exit 1
+          }
+          echo "✅ Health check passed!"
 
       - name: Notify Deployment Success
         run: |
