@@ -1,18 +1,18 @@
-# FastAPI Boilerplate
+# CI/CD Pipeline with FastAPI
 
-A production-ready FastAPI boilerplate with PostgreSQL database integration, connection pooling, comprehensive testing infrastructure, and CI/CD pipeline.
+A production-ready FastAPI application with PostgreSQL database integration, Docker containerization, and automated CI/CD pipeline for EC2 deployment.
 
 ## 🚀 Features
 
 - **FastAPI Framework**: High-performance async API framework
 - **PostgreSQL Integration**: Robust database with connection pooling
-- **Docker Support**: Containerized deployment with Docker Compose
-- **CI/CD Pipeline**: Automated testing, building, and deployment
-- **Security Scanning**: Automated vulnerability scanning
+- **Docker Support**: Multi-stage containerized deployment
+- **CI/CD Pipeline**: Automated testing, building, and EC2 deployment
+- **Database Connectivity**: Fixed Docker networking with host mode
+- **Health Monitoring**: Robust health checks with retry logic
 - **API Documentation**: Interactive Swagger UI and ReDoc
-- **Health Checks**: Comprehensive health monitoring
-- **Rate Limiting**: Built-in request rate limiting
 - **Testing Infrastructure**: Unit, integration, and E2E tests
+- **Environment Debugging**: Comprehensive logging and variable display
 
 ## 📋 Prerequisites
 
@@ -183,31 +183,26 @@ curl "http://localhost:8000/api/v1/status"
 
 1. **CI Pipeline** (`.github/workflows/ci.yml`)
 
-   - Code linting and formatting
-   - Unit and E2E testing
-   - Security scanning
-   - Docker image building
+   - Code linting and formatting with Black
+   - Unit and E2E testing with pytest
+   - PostgreSQL database testing
+   - Coverage reporting
+   - Test result artifacts
 
 2. **CD Pipeline** (`.github/workflows/cd.yml`)
 
-   - Automated deployment to staging
-   - Production deployment on tags
-   - Docker image publishing
-
-3. **Security Scan** (`.github/workflows/security.yml`)
-
-   - Weekly vulnerability scanning
-   - Dependency security checks
-
-4. **Dependency Update** (`.github/workflows/dependency-update.yml`)
-   - Weekly dependency updates
-   - Automated PR creation
+   - Automated deployment to EC2
+   - Docker image building and pushing to Docker Hub
+   - SSH deployment with environment variables
+   - Health check verification
+   - Old image cleanup
 
 ### Workflow Triggers
 
 - **Push to main/develop**: Runs CI pipeline
 - **Pull Request**: Runs CI pipeline
 - **CI success**: Automatically triggers CD pipeline
+- **Manual trigger**: Can be run manually from GitHub Actions
 
 ## 🚀 Automatic Deployment
 
@@ -232,9 +227,12 @@ curl "http://localhost:8000/api/v1/status"
 ### **Deployment Process**
 
 1. **Builds Docker image** with your code
-2. **Pushes to GitHub Container Registry** (GHCR)
-3. **Deploys to your server** (EC2, VPS, etc.)
-4. **Runs health check** to verify deployment
+2. **Pushes to Docker Hub** (regsim/ci-cd-pipeline)
+3. **SSH to EC2** and runs deployment script
+4. **Pulls latest image** from Docker Hub
+5. **Stops old container** and starts new one
+6. **Runs health check** with retry logic
+7. **Cleans up old images**
 
 ### **EC2 Server Setup**
 
@@ -242,16 +240,23 @@ The CD pipeline automatically deploys to your EC2 instance. You need to:
 
 1. **Set up GitHub Secrets** (see [EC2_SETUP.md](EC2_SETUP.md))
 2. **Install Docker on EC2**
-3. **Configure SSH access**
-4. **Add database credentials**
+3. **Configure PostgreSQL database**
+4. **Set up SSH access**
 
 **Quick Setup:**
 
 ```bash
 # Install Docker on EC2
-sudo apt update && sudo apt install -y docker.io
+sudo yum update -y
+sudo yum install -y docker
 sudo systemctl start docker
-sudo usermod -aG docker $USER
+sudo usermod -aG docker ec2-user
+
+# Install PostgreSQL
+sudo yum install -y postgresql postgresql-server
+sudo postgresql-setup initdb
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
 
 # Test deployment
 curl http://your-ec2-ip:8000/api/v1/health
@@ -259,24 +264,22 @@ curl http://your-ec2-ip:8000/api/v1/health
 
 **Full setup guide:** See [EC2_SETUP.md](EC2_SETUP.md) for detailed instructions.
 
-### **Automatic Deployment Process**
+### **Deployment Features**
 
-1. **Push to main** → CI runs tests
-2. **Tests pass** → CD builds Docker image
-3. **Image pushed to GHCR** → GitHub Container Registry
-4. **SSH to EC2** → Deploy script runs
-5. **Pull latest image** → From GHCR
-6. **Stop old container** → Clean shutdown
-7. **Start new container** → With latest code
-8. **Health check** → Verify deployment
+- **Host Networking**: Uses `--network host` for database connectivity
+- **Environment Variables**: Secure credential management
+- **Health Check Retry**: Up to 6 attempts with 10-second intervals
+- **Database Setup**: Automatic PostgreSQL configuration
+- **Image Cleanup**: Removes old Docker images to save space
+- **Debug Logging**: Comprehensive environment variable display
 
 ## 🏗️ Project Structure
 
 ```
-fastapi-boilerplate/
+ci-cd-pipeline/
 ├── app/                    # Application code
-│   ├── config/            # Configuration
-│   ├── database/          # Database layer
+│   ├── config/            # Database configuration
+│   ├── database/          # Connection pooling
 │   ├── models/            # Pydantic models
 │   ├── routes/            # API routes
 │   └── services/          # Business logic
@@ -284,21 +287,61 @@ fastapi-boilerplate/
 │   ├── e2e/              # End-to-end tests
 │   ├── fixtures/         # Test data
 │   └── utils/            # Test utilities
-├── .github/workflows/     # GitHub Actions
-├── docker-compose.yml     # Docker Compose
-├── Dockerfile            # Docker configuration
+├── .github/workflows/     # GitHub Actions CI/CD
+├── docker-compose.yml     # Local development
+├── Dockerfile            # Multi-stage container
+├── deploy.sh             # EC2 deployment script
 ├── requirements.txt      # Python dependencies
+├── init.sql              # Database initialization
 └── main.py              # Application entry point
 ```
+
+## 🌐 External Access
+
+### **Accessing Your API from Outside EC2**
+
+1. **Configure Security Group**
+
+   ```bash
+   # Allow inbound traffic on port 8000
+   aws ec2 authorize-security-group-ingress \
+     --group-id sg-xxxxxxxxx \
+     --protocol tcp \
+     --port 8000 \
+     --cidr 0.0.0.0/0
+   ```
+
+2. **Get Your EC2 Public IP**
+
+   ```bash
+   curl http://169.254.169.254/latest/meta-data/public-ipv4
+   ```
+
+3. **Test External Access**
+
+   ```bash
+   # Health check
+   curl http://YOUR-EC2-PUBLIC-IP:8000/api/v1/health
+
+   # API documentation
+   http://YOUR-EC2-PUBLIC-IP:8000/docs
+   ```
+
+### **Troubleshooting**
+
+- **Container shows "unhealthy"**: Check if `curl` is installed in Docker image
+- **Database connection fails**: Verify PostgreSQL is running and configured
+- **Health check times out**: Check security group allows port 8000
+- **Deployment fails**: Check GitHub Secrets are properly configured
 
 ## 🔒 Security
 
 - **Input validation** with Pydantic
 - **SQL injection protection** with parameterized queries
-- **Rate limiting** (configurable)
-- **Security headers** in responses
-- **Automated vulnerability scanning**
-- **Dependency security checks**
+- **Environment variable security** with GitHub Secrets
+- **Docker security** with non-root user
+- **Network security** with host networking
+- **Private key protection** with .gitignore
 
 ## 📊 Monitoring
 
